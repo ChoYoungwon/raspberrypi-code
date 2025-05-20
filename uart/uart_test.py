@@ -1,44 +1,40 @@
-import serial
+import RPi.GPIO as GPIO
 import time
 
-# 시리얼 포트 설정
-ser = serial.Serial(
-    port='/dev/serial0',
-    baudrate=9600,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-    bytesize=serial.EIGHTBITS,
-    timeout=1
-)
+# GPIO 설정
+GPIO.setmode(GPIO.BCM)
+TX_PIN = 14  # GPIO 14 (물리적 핀 8)
+RX_PIN = 15  # GPIO 15 (물리적 핀 10)
+
+# 핀 설정
+GPIO.setup(TX_PIN, GPIO.OUT)
+GPIO.setup(RX_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 try:
-    print("루프백 테스트 시작. TX와 RX가 연결되어 있는지 확인하세요.")
+    print("GPIO 루프백 테스트 시작")
+    print("물리적으로 GPIO 14(TX)와 GPIO 15(RX)가 연결되어 있어야 합니다.")
+    print("테스트 중 Ctrl+C를 눌러 종료할 수 있습니다.")
     
     while True:
-        test_message = "UART 테스트 " + time.strftime("%H:%M:%S")
-        print(f"전송: {test_message}")
+        # TX 핀을 HIGH로 설정
+        GPIO.output(TX_PIN, GPIO.HIGH)
+        time.sleep(0.5)
         
-        # 메시지 전송
-        ser.write((test_message + '\r\n').encode('utf-8'))
+        # RX 핀 상태 읽기
+        rx_state = GPIO.input(RX_PIN)
+        print(f"TX: HIGH, RX: {rx_state} - {'성공 ✓' if rx_state else '실패 ✗'}")
         
-        # 잠시 대기
-        time.sleep(0.1)
+        # TX 핀을 LOW로 설정
+        GPIO.output(TX_PIN, GPIO.LOW)
+        time.sleep(0.5)
         
-        # 수신 데이터 확인
-        if ser.in_waiting > 0:
-            received = ser.readline().decode('utf-8').strip()
-            print(f"수신: {received}")
-            
-            # 송신한 메시지와 수신한 메시지 비교
-            if received == test_message:
-                print("테스트 성공: 메시지가 정확히 수신되었습니다.")
-            else:
-                print("테스트 실패: 메시지가 다릅니다.")
-        else:
-            print("수신 데이터 없음. 연결을 확인하세요.")
-            
-        time.sleep(2)
+        # RX 핀 상태 읽기
+        rx_state = GPIO.input(RX_PIN)
+        print(f"TX: LOW, RX: {rx_state} - {'성공 ✓' if not rx_state else '실패 ✗'}")
+        
+        print("-" * 30)
         
 except KeyboardInterrupt:
     print("\n테스트 종료")
-    ser.close()
+finally:
+    GPIO.cleanup()

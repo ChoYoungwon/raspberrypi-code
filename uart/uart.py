@@ -20,8 +20,8 @@ def receive_message():
 
 try:
     while True:
-#        receive_message()
-#        time.sleep(1)
+        # receive_message()
+        # time.sleep(1)
         send_message("test")
         time.sleep(1)
 
